@@ -82,6 +82,8 @@ export const EditingTemplateControls: React.FC<EditingTemplateControlsProps> = (
         }
 
         if (control.type === "toggle") {
+          const checked = value ? true : false;
+
           return (
             <div key={control.id} className="flex items-center justify-between gap-3">
               <label className="text-[11px] font-medium text-text-primary">
@@ -90,9 +92,9 @@ export const EditingTemplateControls: React.FC<EditingTemplateControlsProps> = (
               <button
                 type="button"
                 disabled={disabled}
-                onClick={() => onChange(control.id, !Boolean(value))}
+                onClick={() => onChange(control.id, !checked)}
                 className={`inline-flex h-7 w-12 items-center rounded-full px-1 transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
-                  Boolean(value)
+                  checked
                     ? "justify-end bg-primary"
                     : "justify-start bg-background-tertiary"
                 }`}

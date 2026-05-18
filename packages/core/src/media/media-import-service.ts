@@ -12,12 +12,10 @@ import {
   isSupportedFormat,
   inferMediaType,
 } from "./mediabunny-engine";
-import {
+import type {
   FFmpegFallback,
-  getFFmpegFallback,
-  PROXY_THRESHOLDS,
-  type ProxySettings,
-  type TranscodeOptions,
+  ProxySettings,
+  TranscodeOptions,
 } from "./ffmpeg-fallback";
 
 export interface MediaImportOptions {
@@ -42,12 +40,20 @@ const DEFAULT_OPTIONS: Required<MediaImportOptions> = {
 
 export class MediaImportService {
   private mediaEngine: MediaBunnyEngine;
-  private ffmpegFallback: FFmpegFallback;
+  private _ffmpegFallback: FFmpegFallback | null = null;
   private initialized = false;
 
   constructor(mediaEngine?: MediaBunnyEngine, ffmpegFallback?: FFmpegFallback) {
     this.mediaEngine = mediaEngine || getMediaEngine();
-    this.ffmpegFallback = ffmpegFallback || getFFmpegFallback();
+    this._ffmpegFallback = ffmpegFallback ?? null;
+  }
+
+  private async getFFmpeg(): Promise<FFmpegFallback> {
+    if (!this._ffmpegFallback) {
+      const { getFFmpegFallback } = await import("./ffmpeg-fallback");
+      this._ffmpegFallback = getFFmpegFallback();
+    }
+    return this._ffmpegFallback;
   }
 
   async initialize(): Promise<void> {
@@ -112,7 +118,7 @@ export class MediaImportService {
         (metadata.audioTrackCount === undefined || metadata.audioTrackCount <= 1)
       ) {
         try {
-          const probeResult = await this.ffmpegFallback.probeAudioStreams(file);
+          const probeResult = await (await this.getFFmpeg()).probeAudioStreams(file);
           if (probeResult.audioStreamCount > 1) {
             metadata.audioTrackCount = probeResult.audioStreamCount;
           }
@@ -305,7 +311,7 @@ export class MediaImportService {
     transcodeOpts?: TranscodeOptions,
   ): Promise<MediaImportResult> {
     const compatibleBlob =
-      await this.ffmpegFallback.transcodeToCompatible(file, undefined, transcodeOpts);
+      await (await this.getFFmpeg()).transcodeToCompatible(file, undefined, transcodeOpts);
     const format = transcodeOpts?.format || "webm";
     const ext = format === "mp4" ? ".mp4" : ".webm";
     const mime = format === "mp4" ? "video/mp4" : "video/webm";
@@ -322,7 +328,7 @@ export class MediaImportService {
     // Probe original file for audio tracks since WebM transcode may lose them
     if (metadata.audioTrackCount === undefined || metadata.audioTrackCount <= 1) {
       try {
-        const probeResult = await this.ffmpegFallback.probeAudioStreams(file);
+        const probeResult = await (await this.getFFmpeg()).probeAudioStreams(file);
         if (probeResult.audioStreamCount > 1) {
           metadata.audioTrackCount = probeResult.audioStreamCount;
         }
@@ -443,30 +449,30 @@ export class MediaImportService {
     return results;
   }
 
-  shouldUseProxy(metadata: {
+  async shouldUseProxy(metadata: {
     width: number;
     height: number;
     duration: number;
     fileSize?: number;
-  }): boolean {
-    return this.ffmpegFallback.shouldUseProxy(metadata);
+  }): Promise<boolean> {
+    return (await this.getFFmpeg()).shouldUseProxy(metadata);
   }
 
-  shouldUseProxyForFile(
+  async shouldUseProxyForFile(
     file: File | Blob,
     metadata: { width: number; height: number; duration: number },
-  ): boolean {
-    return this.ffmpegFallback.shouldUseProxy({
+  ): Promise<boolean> {
+    return (await this.getFFmpeg()).shouldUseProxy({
       ...metadata,
       fileSize: file.size,
     });
   }
 
-  getRecommendedProxyPreset(metadata: {
+  async getRecommendedProxyPreset(metadata: {
     width: number;
     height: number;
-  }): "low" | "medium" | "high" {
-    return this.ffmpegFallback.getRecommendedProxyPreset(metadata);
+  }): Promise<"low" | "medium" | "high"> {
+    return (await this.getFFmpeg()).getRecommendedProxyPreset(metadata);
   }
 
   async generateProxy(
@@ -488,7 +494,7 @@ export class MediaImportService {
     }
 
     // Use FFmpeg fallback with settings
-    return this.ffmpegFallback.generateProxy(file, settings, onProgress);
+    return (await this.getFFmpeg()).generateProxy(file, settings, onProgress);
   }
 
   async generateProxyWithPreset(
@@ -500,7 +506,7 @@ export class MediaImportService {
       estimatedTimeRemaining: number;
     }) => void,
   ): Promise<Blob> {
-    return this.ffmpegFallback.generateProxyWithPreset(
+    return (await this.getFFmpeg()).generateProxyWithPreset(
       file,
       preset,
       onProgress,
@@ -516,20 +522,21 @@ export class MediaImportService {
       estimatedTimeRemaining: number;
     }) => void,
   ): Promise<Blob | null> {
-    if (!this.shouldUseProxyForFile(file, metadata)) {
+    if (!(await this.shouldUseProxyForFile(file, metadata))) {
       return null;
     }
 
     // Determine the best preset based on resolution
-    const preset = this.getRecommendedProxyPreset(metadata);
+    const preset = await this.getRecommendedProxyPreset(metadata);
     return this.generateProxyWithPreset(file, preset, onProgress);
   }
 
-  getProxyThresholds(): {
+  async getProxyThresholds(): Promise<{
     minPixelCount: number;
     minDuration: number;
     minFileSize: number;
-  } {
+  }> {
+    const { PROXY_THRESHOLDS } = await import("./ffmpeg-fallback");
     return { ...PROXY_THRESHOLDS };
   }
 

@@ -10,15 +10,7 @@ export {
   inferMediaType,
 } from "./mediabunny-engine";
 
-// FFmpeg Fallback
-export {
-  FFmpegFallback,
-  getFFmpegFallback,
-  shouldUseProxy,
-  getRecommendedProxyPreset,
-  PROXY_PRESETS,
-  PROXY_THRESHOLDS,
-} from "./ffmpeg-fallback";
+// FFmpeg Fallback — types only; use dynamic import("@openreel/core/media") for runtime values
 export type { ProxySettings, TranscodeOptions, AudioProbeResult, AudioStreamInfo } from "./ffmpeg-fallback";
 
 // Media Import Service

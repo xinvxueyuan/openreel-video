@@ -369,7 +369,7 @@ export const Preview: React.FC = () => {
     audioTrackIndex: number = 0,
   ): Promise<AudioBuffer | null> => {
     try {
-      const { getFFmpegFallback } = await import("@openreel/core/media");
+      const { getFFmpegFallback } = await import("@openreel/core/media/ffmpeg-fallback");
       const ffmpeg = getFFmpegFallback();
       const wavBlob = await ffmpeg.extractAudioAsWav(blob, audioTrackIndex);
       const arrayBuffer = await wavBlob.arrayBuffer();

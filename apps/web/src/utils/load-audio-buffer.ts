@@ -17,7 +17,7 @@ export const loadAudioBuffer = async (
   const audioTrackIndex = options.audioTrackIndex ?? 0;
 
   try {
-    const { getFFmpegFallback } = await import("@openreel/core/media");
+    const { getFFmpegFallback } = await import("@openreel/core/media/ffmpeg-fallback");
     const ffmpeg = getFFmpegFallback();
     options.onProgress?.({
       stage: "extracting",

@@ -2362,7 +2362,7 @@ export const useProjectStore = create<ProjectState>()(
         if (audioTrackCount <= 1 && mediaItem.blob) {
           try {
             const { getFFmpegFallback } = await import(
-              "@openreel/core/media"
+              "@openreel/core/media/ffmpeg-fallback"
             );
             const ffmpeg = getFFmpegFallback();
             const probeResult = await ffmpeg.probeAudioStreams(mediaItem.blob);

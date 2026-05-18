@@ -27,7 +27,6 @@ export const BlendingSection: React.FC<BlendingSectionProps> = ({ clipId }) => {
     getStickerClip,
     updateClipBlendMode,
     updateClipBlendOpacity,
-    project,
   } = useProjectStore();
 
   const clip = useMemo(() => {
@@ -42,15 +41,7 @@ export const BlendingSection: React.FC<BlendingSectionProps> = ({ clipId }) => {
     const stickerClip = getStickerClip(clipId);
     if (stickerClip) return stickerClip;
     return null;
-  }, [
-    clipId,
-    getClip,
-    getTextClip,
-    getShapeClip,
-    getSVGClip,
-    getStickerClip,
-    project.modifiedAt,
-  ]);
+  }, [clipId, getClip, getTextClip, getShapeClip, getSVGClip, getStickerClip]);
 
   const blendMode = clip?.blendMode || "normal";
   const blendOpacity = clip?.blendOpacity ?? 100;

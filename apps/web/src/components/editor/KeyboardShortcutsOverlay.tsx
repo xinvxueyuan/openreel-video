@@ -113,7 +113,7 @@ export const KeyboardShortcutsOverlay: React.FC<
       setShortcuts(keyboardShortcuts.getAllShortcuts());
       setEditingId(null);
     },
-    [],
+    [t],
   );
 
   const handleResetShortcut = (id: string) => {

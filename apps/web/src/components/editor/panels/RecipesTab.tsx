@@ -56,7 +56,7 @@ export const RecipesTab: React.FC = () => {
     }
 
     return getClip(selectedClipIds[0]) || null;
-  }, [getClip, selectedClipIds, project.modifiedAt]);
+  }, [getClip, selectedClipIds]);
 
   const selectedTrack = useMemo(() => {
     if (!selectedClip) {

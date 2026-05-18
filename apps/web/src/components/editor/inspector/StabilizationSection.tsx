@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import { Video, Download } from "lucide-react";
 import type { Clip } from "@openreel/core";
 import { getVidstabEngine, type VidstabProgress } from "@openreel/core";
@@ -18,12 +18,16 @@ export const StabilizationSection: React.FC<StabilizationSectionProps> = ({
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
-  const stabilization = clip.stabilization ?? {
-    enabled: false,
-    strength: 50,
-    cropMode: "auto" as const,
-    analyzed: false,
-  };
+  const stabilization = useMemo(
+    () =>
+      clip.stabilization ?? {
+        enabled: false,
+        strength: 50,
+        cropMode: "auto" as const,
+        analyzed: false,
+      },
+    [clip.stabilization],
+  );
 
   const vidstabEngine = getVidstabEngine();
   const isStabilized = vidstabEngine.hasStabilized(clip.id);
@@ -98,15 +102,7 @@ export const StabilizationSection: React.FC<StabilizationSectionProps> = ({
       setProcessing(false);
       setStage(null);
     }
-  }, [
-    clip.id,
-    clip.mediaId,
-    getMediaItem,
-    vidstabEngine,
-    stabilization.strength,
-    stabilization.cropMode,
-    updateStabilization,
-  ]);
+  }, [getMediaItem, clip.mediaId, clip.id, clip.inPoint, clip.outPoint, vidstabEngine, stabilization.strength, stabilization.cropMode, updateStabilization]);
 
   const handleToggle = useCallback(
     (enabled: boolean) => {

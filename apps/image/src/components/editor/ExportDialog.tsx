@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+﻿import { useState, useMemo, useEffect } from 'react';
 import { Download, FileImage, Loader2, Link2, Link2Off, Printer, Instagram, Youtube, Twitter, Linkedin, Facebook, Image } from 'lucide-react';
 import { Dialog, DialogFooter } from '../ui/Dialog';
 import { useProjectStore } from '../../stores/project-store';
@@ -190,7 +190,7 @@ export function ExportDialog({ open, onClose }: ExportDialogProps) {
       setCustomWidth(artboard.size.width);
       setCustomHeight(artboard.size.height);
     }
-  }, [artboard?.id]);
+  }, [artboard, artboard?.id]);
 
   const handleCustomWidthChange = (newWidth: number) => {
     setCustomWidth(newWidth);
@@ -295,7 +295,7 @@ export function ExportDialog({ open, onClose }: ExportDialogProps) {
 
       showNotification('success', `Exported ${blobs.length} artboard${blobs.length > 1 ? 's' : ''}`);
       onClose();
-    } catch (error) {
+    } catch {
       showNotification('error', 'Export failed. Please try again.');
     } finally {
       setIsExporting(false);
@@ -514,7 +514,7 @@ export function ExportDialog({ open, onClose }: ExportDialogProps) {
                 <div className="p-3 bg-secondary/30 rounded-lg text-xs text-muted-foreground">
                   <p>Print size at {dpi} DPI:</p>
                   <p className="font-medium text-foreground mt-1">
-                    {printDimensions.inches.width}" × {printDimensions.inches.height}" ({printDimensions.cm.width} × {printDimensions.cm.height} cm)
+                    {printDimensions.inches.width}" 脳 {printDimensions.inches.height}" ({printDimensions.cm.width} 脳 {printDimensions.cm.height} cm)
                   </p>
                 </div>
               )}
@@ -570,7 +570,7 @@ export function ExportDialog({ open, onClose }: ExportDialogProps) {
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Dimensions</span>
             <span className="font-medium">
-              {dimensions?.width} × {dimensions?.height} px
+              {dimensions?.width} 脳 {dimensions?.height} px
             </span>
           </div>
           <div className="flex items-center justify-between text-sm">

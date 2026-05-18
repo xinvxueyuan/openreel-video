@@ -18,10 +18,7 @@ if (POSTHOG_KEY && POSTHOG_HOST) {
   });
 }
 
-registerServiceWorker().then((registration) => {
-  if (registration) {
-  }
-});
+void registerServiceWorker();
 
 const root = document.getElementById("root")!;
 

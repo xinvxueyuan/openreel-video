@@ -101,9 +101,10 @@ export function useTtsActions(options: UseTtsActionsOptions): UseTtsActionsRetur
 
   // Pause audio and abort in-flight requests on unmount
   useEffect(() => {
+    const audio = audioRef.current;
     return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
+      if (audio) {
+        audio.pause();
       }
       if (generateAbortRef.current) {
         generateAbortRef.current.abort();

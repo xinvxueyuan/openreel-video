@@ -195,7 +195,7 @@ export const MultiCameraPanel: React.FC<MultiCameraPanelProps> = () => {
 
   const groups = useMemo(() => {
     return multiCamEngine?.getAllGroups() || [];
-  }, [multiCamEngine, project.modifiedAt]);
+  }, [multiCamEngine]);
 
   const availableClips = useMemo(() => {
     const clips: { id: string; name: string; trackName: string }[] = [];

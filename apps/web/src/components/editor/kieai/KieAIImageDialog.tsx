@@ -123,7 +123,6 @@ export function KieAIImageDialog({ open, onClose, sourceFile, previewUrl }: Prop
       if (needsUpload) {
         const uploaded = await uploadFileStream(sourceFile);
         if (ac.signal.aborted) return;
-        console.log("[KieAI] upload response:", uploaded);
         // KieAI API may return url under different field names
         uploadedUrl =
           uploaded.fileUrl ||
@@ -162,7 +161,6 @@ export function KieAIImageDialog({ open, onClose, sourceFile, previewUrl }: Prop
           throw new Error(t("editor:kieaiDialog.errors.unknownModel"));
       }
 
-      console.log("[KieAI] createTask payload:", { model: selectedModel, input });
       const taskId = await createImageTask(selectedModel, input);
 
       // Bail out if the user cancelled while the request was in flight

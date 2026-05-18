@@ -199,7 +199,6 @@ export const MaskSection: React.FC<MaskSectionProps> = ({ clipId }) => {
   const getMaskEngine = useEngineStore((state) => state.getMaskEngine);
   const [selectedMaskId, setSelectedMaskId] = useState<string | null>(null);
   const [expandedMasks, setExpandedMasks] = useState<Set<string>>(new Set());
-  const [refreshKey, setRefreshKey] = useState(0);
   const [maskEngine, setMaskEngine] =
     useState<import("@openreel/core").MaskEngine | null>(null);
 
@@ -220,10 +219,9 @@ export const MaskSection: React.FC<MaskSectionProps> = ({ clipId }) => {
   const masks = useMemo(() => {
     if (!maskEngine) return [];
     return maskEngine.getMasksForClip(clipId);
-  }, [maskEngine, clipId, refreshKey]);
+  }, [maskEngine, clipId]);
 
   const triggerRefresh = useCallback(() => {
-    setRefreshKey((k) => k + 1);
     useProjectStore.setState((state) => ({
       project: { ...state.project, modifiedAt: Date.now() },
     }));

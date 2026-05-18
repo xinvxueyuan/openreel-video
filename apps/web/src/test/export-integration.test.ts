@@ -39,6 +39,29 @@ vi.mock("../bridges/media-bridge", () => ({
   initializeMediaBridge: vi.fn().mockResolvedValue(undefined),
 }));
 
+const effectsBridgeMock = vi.hoisted(() => ({
+  isInitialized: vi.fn().mockReturnValue(true),
+  applyVideoEffect: vi.fn().mockReturnValue({ success: true, effectId: "effect-1" }),
+  removeVideoEffect: vi.fn().mockReturnValue({ success: true }),
+  updateVideoEffect: vi.fn().mockReturnValue({ success: true }),
+  reorderEffects: vi.fn().mockReturnValue({ success: true }),
+  toggleEffect: vi.fn().mockReturnValue({ success: true }),
+  resetEffect: vi.fn().mockReturnValue({ success: true }),
+  getEffects: vi.fn().mockReturnValue([]),
+  getColorGrading: vi.fn().mockReturnValue({}),
+  clearEffects: vi.fn(),
+  serializeEffects: vi.fn().mockReturnValue({ effects: [], colorGrading: {} }),
+  deserializeEffects: vi.fn().mockReturnValue({ success: true }),
+  dispose: vi.fn(),
+}));
+
+vi.mock("../bridges/effects-bridge", () => ({
+  getEffectsBridge: vi.fn(() => effectsBridgeMock),
+  getEffectsBridgeAsync: vi.fn().mockResolvedValue(effectsBridgeMock),
+  initializeEffectsBridge: vi.fn().mockResolvedValue(effectsBridgeMock),
+  disposeEffectsBridge: vi.fn(),
+}));
+
 const createTestClip = (overrides?: Partial<Clip>): Clip => ({
   id: `clip-${Date.now()}`,
   mediaId: "media-1",

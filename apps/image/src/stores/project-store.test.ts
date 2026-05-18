@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { useProjectStore } from './project-store';
 
 const DEFAULT_SIZE = { width: 1080, height: 1080 };
@@ -91,11 +91,17 @@ describe('project-store', () => {
 
     it('rejects a project with missing required fields and keeps state null', () => {
       resetStore();
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       // Supply an invalid/incomplete object – loadProject should reject it.
       useProjectStore
         .getState()
         .loadProject({ id: 'bad', name: 'broken' } as never);
       expect(useProjectStore.getState().project).toBeNull();
+      expect(errorSpy).toHaveBeenCalledWith(
+        '[project-store] Invalid project:',
+        expect.any(String),
+      );
+      errorSpy.mockRestore();
     });
   });
 

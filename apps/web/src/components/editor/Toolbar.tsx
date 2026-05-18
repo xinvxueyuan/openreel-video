@@ -211,7 +211,7 @@ export const Toolbar: React.FC = () => {
         throw new Error(finalResult?.error?.message || t("toolbar.export.status.failed"));
       }
     },
-    [project, track],
+    [project, t, track],
   );
 
   const showSavePicker = useCallback(async (filename: string, ext: string): Promise<FileSystemWritableFileStream> => {
@@ -293,7 +293,7 @@ export const Toolbar: React.FC = () => {
         return Promise.resolve();
       },
     } as unknown as FileSystemWritableFileStream;
-  }, []);
+  }, [t]);
 
   const handleExport = useCallback(
     async (type: ExportType) => {
@@ -356,7 +356,11 @@ export const Toolbar: React.FC = () => {
               duration: project.timeline?.duration ?? 0,
             });
           } else {
-            try { await writable.abort(); } catch {}
+            try {
+              await writable.abort();
+            } catch {
+              // Export already failed; abort errors should not hide the original failure.
+            }
             throw new Error(finalResult?.error?.message || t("toolbar.export.status.failed"));
           }
         } else {
@@ -407,7 +411,7 @@ export const Toolbar: React.FC = () => {
         }));
       }
     },
-    [project, track, runExport, showSavePicker],
+    [showSavePicker, project, t, track, runExport],
   );
 
   const handleCancelExport = useCallback(() => {
@@ -477,7 +481,7 @@ export const Toolbar: React.FC = () => {
         }));
       }
     },
-    [project, track, runExport, showSavePicker],
+    [showSavePicker, project.name, project.settings.width, project.settings.height, project.timeline?.duration, t, runExport, track],
   );
 
 

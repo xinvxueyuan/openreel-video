@@ -191,7 +191,6 @@ export class BrushEngine {
     const totalLength = this.calculateStrokeLength(points);
     const spacingPx = (settings.size * settings.spacing) / 100;
 
-    let accumulatedDistance = 0;
     let currentLength = 0;
 
     for (let i = Math.max(1, startIndex); i < points.length; i++) {
@@ -246,7 +245,6 @@ export class BrushEngine {
           flow: dynamicFlow,
         });
 
-        accumulatedDistance += spacingPx;
         currentLength += spacingPx;
       }
     }

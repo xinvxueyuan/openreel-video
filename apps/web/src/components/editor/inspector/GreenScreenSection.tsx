@@ -99,7 +99,6 @@ const COLOR_PRESETS: { color: RGB; label: string }[] = [
 export const GreenScreenSection: React.FC<GreenScreenSectionProps> = ({
   clipId,
 }) => {
-  const project = useProjectStore((state) => state.project);
   const getChromaKeyEngine = useEngineStore(
     (state) => state.getChromaKeyEngine,
   );
@@ -141,7 +140,7 @@ export const GreenScreenSection: React.FC<GreenScreenSectionProps> = ({
         spillSuppression: 0.5,
       }
     );
-  }, [chromaKeyEngine, clipId, project.modifiedAt]);
+  }, [chromaKeyEngine, clipId]);
 
   const handleToggleEnabled = useCallback(() => {
     if (!chromaKeyEngine) return;

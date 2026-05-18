@@ -18,6 +18,14 @@ vi.mock("@openreel/core", async () => {
   };
 });
 
+vi.mock("../../../utils/load-audio-buffer", () => ({
+  loadAudioBuffer: vi.fn((audioContext: AudioContext) => {
+    const buffer = audioContext.createBuffer(1, 48_000, 48_000);
+    buffer.getChannelData(0).fill(0.01);
+    return Promise.resolve(buffer);
+  }),
+}));
+
 const clipId = "clip-noise";
 const trackId = "track-audio";
 

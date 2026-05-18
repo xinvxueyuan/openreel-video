@@ -38,18 +38,22 @@ interface SVGSectionProps {
 }
 
 export const SVGSection: React.FC<SVGSectionProps> = ({ clipId }) => {
-  const { getSVGClipById, updateSVGClip, project } = useProjectStore();
+  const { getSVGClipById, updateSVGClip } = useProjectStore();
 
   const svgClip = useMemo(
     () => getSVGClipById(clipId),
-    [clipId, getSVGClipById, project.modifiedAt],
+    [clipId, getSVGClipById],
   );
 
-  const colorStyle = svgClip?.colorStyle || {
-    colorMode: "none" as const,
-    tintColor: "#ffffff",
-    tintOpacity: 1,
-  };
+  const colorStyle = useMemo(
+    () =>
+      svgClip?.colorStyle ?? {
+        colorMode: "none" as const,
+        tintColor: "#ffffff",
+        tintOpacity: 1,
+      },
+    [svgClip?.colorStyle],
+  );
 
   const entryAnimation = svgClip?.entryAnimation;
   const exitAnimation = svgClip?.exitAnimation;

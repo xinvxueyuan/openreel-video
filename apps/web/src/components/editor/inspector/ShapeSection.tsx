@@ -121,11 +121,11 @@ interface ShapeSectionProps {
 }
 
 export const ShapeSection: React.FC<ShapeSectionProps> = ({ clipId }) => {
-  const { getShapeClip, updateShapeStyle, project } = useProjectStore();
+  const { getShapeClip, updateShapeStyle } = useProjectStore();
 
   const shapeClip = useMemo(
     () => getShapeClip(clipId),
-    [clipId, getShapeClip, project.modifiedAt],
+    [clipId, getShapeClip],
   );
 
   const defaultFill: FillStyle = {

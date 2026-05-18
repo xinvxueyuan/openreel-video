@@ -283,21 +283,7 @@ export const ClipComponent: React.FC<ClipComponentProps> = ({
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [
-    isDragging,
-    dragOffset,
-    pixelsPerSecond,
-    clip.id,
-    track.id,
-    track.type,
-    allTracks,
-    trackHeights,
-    timelineRef,
-    playheadPosition,
-    snapSettings,
-    onMoveClip,
-    onSnapIndicator,
-  ]);
+  }, [isDragging, dragOffset, pixelsPerSecond, clip.id, track.id, track.type, allTracks, trackHeights, timelineRef, playheadPosition, snapSettings, onMoveClip, onSnapIndicator, clip.duration]);
 
   useEffect(() => {
     if (!isTrimming || !trimEdge || !onTrimClip) return;

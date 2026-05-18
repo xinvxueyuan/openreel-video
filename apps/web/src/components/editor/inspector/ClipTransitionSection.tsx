@@ -917,7 +917,6 @@ export const ClipTransitionSection: React.FC<ClipTransitionSectionProps> = ({
     updateClipTransition,
     removeClipTransition,
   } = useProjectStore();
-  const getTitleEngine = useEngineStore((state) => state.getTitleEngine);
   const getGraphicsEngine = useEngineStore((state) => state.getGraphicsEngine);
   const { settings } = project;
 
@@ -985,16 +984,7 @@ export const ClipTransitionSection: React.FC<ClipTransitionSectionProps> = ({
       return { type: "sticker" as const, data: stickerClip as ClipLike };
 
     return null;
-  }, [
-    timelineClipContext,
-    clipId,
-    getTextClip,
-    getShapeClip,
-    getSVGClip,
-    getStickerClip,
-    getTitleEngine,
-    project.modifiedAt,
-  ]);
+  }, [timelineClipContext, clipId, getTextClip, getShapeClip, getSVGClip, getStickerClip]);
 
   const adjacentTransitions = useMemo<AdjacentTransitionConfig[]>(() => {
     if (!timelineClipContext) {
@@ -1141,19 +1131,7 @@ export const ClipTransitionSection: React.FC<ClipTransitionSectionProps> = ({
     } else {
       toast.info("Animations Cleared");
     }
-  }, [
-    clip,
-    clipId,
-    entryPreset,
-    entryDuration,
-    entryEasing,
-    exitPreset,
-    exitDuration,
-    exitEasing,
-    updateClipKeyframes,
-    updateTextClipKeyframes,
-    settings,
-  ]);
+  }, [clip, settings.width, settings.height, entryPreset, entryDuration, entryEasing, exitPreset, exitDuration, exitEasing, updateTextClipKeyframes, clipId, getGraphicsEngine, updateClipKeyframes]);
 
   if (!clip) return null;
 

@@ -33,7 +33,7 @@ export const AudioTextSyncPanel: React.FC<BeatSyncPanelProps> = ({ clipId }) => 
 
   const availableTracks = useMemo(() => {
     return bridge.getAvailableTracks();
-  }, [bridge, state?.beatAnalysis]);
+  }, [bridge]);
 
   const handleAnalyzeBeats = useCallback(() => {
     bridge.analyzeBeats();

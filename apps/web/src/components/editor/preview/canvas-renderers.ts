@@ -573,8 +573,8 @@ export const renderTextClipToCanvas = (
     textClip,
     clipLocalTime,
   );
-  let { opacity, transform, style, visibleText, characterStates } =
-    animatedState;
+  const { style, visibleText, characterStates } = animatedState;
+  let { opacity, transform } = animatedState;
 
   if (opacity <= 0 || visibleText.length === 0) {
     return;
@@ -953,12 +953,12 @@ const renderSVGClip = (
         animationOpacity *= eased;
         break;
       case "scale":
-        const scale = eased;
+        { const scale = eased;
         animationScale = {
           x: animationScale.x * scale,
           y: animationScale.y * scale,
         };
-        break;
+        break; }
       case "slide-left":
         animationTranslateX = -(1 - eased) * canvasWidth;
         break;
@@ -976,21 +976,21 @@ const renderSVGClip = (
         animationOpacity *= eased;
         break;
       case "bounce":
-        const bounceProgress =
+        { const bounceProgress =
           eased < 0.5 ? 2 * eased * eased : 1 - Math.pow(-2 * eased + 2, 2) / 2;
         animationScale = {
           x: animationScale.x * bounceProgress,
           y: animationScale.y * bounceProgress,
         };
         animationOpacity *= eased;
-        break;
+        break; }
       case "pop":
-        const popScale = eased < 0.5 ? eased * 2.2 : 1 + (1 - eased) * 0.2;
+        { const popScale = eased < 0.5 ? eased * 2.2 : 1 + (1 - eased) * 0.2;
         animationScale = {
           x: animationScale.x * popScale,
           y: animationScale.y * popScale,
         };
-        break;
+        break; }
       case "draw":
         drawProgress = eased;
         animationOpacity *= Math.min(1, eased * 2);
@@ -1028,7 +1028,7 @@ const renderSVGClip = (
         };
         break;
       case "reveal-center":
-        const centerScale = eased;
+        { const centerScale = eased;
         animationScale = {
           x: animationScale.x * centerScale,
           y: animationScale.y * centerScale,
@@ -1039,7 +1039,7 @@ const renderSVGClip = (
           width: (viewBox?.width || 200) * eased,
           height: (viewBox?.height || 200) * eased,
         };
-        break;
+        break; }
       case "reveal-edges":
         clipRect = {
           x: (viewBox?.width || 200) * eased * 0.5,
@@ -1049,6 +1049,7 @@ const renderSVGClip = (
         };
         break;
       case "elastic":
+      {
         const elasticScale =
           eased < 0.5
             ? 4 * eased * eased * eased
@@ -1059,6 +1060,7 @@ const renderSVGClip = (
           y: animationScale.y * overshoot,
         };
         break;
+      }
       case "flip-horizontal":
         animationScale = {
           x: animationScale.x * Math.cos(eased * Math.PI),
@@ -1090,12 +1092,12 @@ const renderSVGClip = (
         animationOpacity *= 1 - eased;
         break;
       case "scale":
-        const scale = 1 - eased;
+        { const scale = 1 - eased;
         animationScale = {
           x: animationScale.x * scale,
           y: animationScale.y * scale,
         };
-        break;
+        break; }
       case "slide-left":
         animationTranslateX = -eased * canvasWidth;
         break;
@@ -1113,7 +1115,7 @@ const renderSVGClip = (
         animationOpacity *= 1 - eased;
         break;
       case "bounce":
-        const bounceOut =
+        { const bounceOut =
           1 -
           (eased < 0.5
             ? 2 * eased * eased
@@ -1123,14 +1125,14 @@ const renderSVGClip = (
           y: animationScale.y * bounceOut,
         };
         animationOpacity *= 1 - eased;
-        break;
+        break; }
       case "pop":
-        const popOutScale = eased < 0.5 ? 1 - eased * 0.2 : 1 - eased * 2.2;
+        { const popOutScale = eased < 0.5 ? 1 - eased * 0.2 : 1 - eased * 2.2;
         animationScale = {
           x: animationScale.x * Math.max(0, popOutScale),
           y: animationScale.y * Math.max(0, popOutScale),
         };
-        break;
+        break; }
       case "draw":
         drawProgress = 1 - eased;
         animationOpacity *= Math.max(0, 1 - eased * 2);
@@ -1184,7 +1186,7 @@ const renderSVGClip = (
         };
         break;
       case "elastic":
-        const elasticOut =
+        { const elasticOut =
           1 -
           (eased < 0.5
             ? 4 * eased * eased * eased
@@ -1193,7 +1195,7 @@ const renderSVGClip = (
           x: animationScale.x * Math.max(0, elasticOut),
           y: animationScale.y * Math.max(0, elasticOut),
         };
-        break;
+        break; }
       case "flip-horizontal":
         animationScale = {
           x: animationScale.x * Math.cos((1 - eased) * Math.PI + Math.PI),
@@ -1915,7 +1917,9 @@ export const applyEffectsToFrame = async (
           if (bgResult && bgResult.width > 0 && bgResult.height > 0) {
             processedFrame = bgResult;
           }
-        } catch {}
+        } catch {
+          // Background removal is optional; keep the original frame on failure.
+        }
       }
     }
 
@@ -1947,7 +1951,9 @@ export const applyEffectsToFrame = async (
         ) {
           processedFrame = effectsResult.image;
         }
-      } catch {}
+      } catch {
+        // Effect processing is optional; keep the current frame on failure.
+      }
     }
 
     if (Object.keys(colorGrading).length > 0) {
@@ -1963,7 +1969,9 @@ export const applyEffectsToFrame = async (
         ) {
           processedFrame = colorGradingResult.image;
         }
-      } catch {}
+      } catch {
+        // Color grading is optional; keep the current frame on failure.
+      }
     }
 
     return processedFrame;

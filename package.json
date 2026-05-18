@@ -49,6 +49,11 @@
     "pnpm": ">=8.0.0"
   },
   "packageManager": "pnpm@9.0.0",
+  "pnpm": {
+    "overrides": {
+      "baseline-browser-mapping": "2.10.30"
+    }
+  },
   "dependencies": {
     "@ffmpeg/core": "0.12.6",
     "@ffmpeg/core-mt": "0.12.6",

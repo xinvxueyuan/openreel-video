@@ -110,7 +110,7 @@ export const Timeline: React.FC = () => {
   const titleEngine = getTitleEngine();
   const allTextClips = useMemo(() => {
     return titleEngine?.getAllTextClips() ?? [];
-  }, [titleEngine, project.modifiedAt]);
+  }, [titleEngine]);
 
   const getTextClipsForTrack = useCallback(
     (trackId: string) => {
@@ -125,7 +125,7 @@ export const Timeline: React.FC = () => {
     const svgs = graphicsEngine?.getAllSVGClips() ?? [];
     const stickers = graphicsEngine?.getAllStickerClips() ?? [];
     return [...shapes, ...svgs, ...stickers];
-  }, [graphicsEngine, project.modifiedAt]);
+  }, [graphicsEngine]);
 
   const getShapeClipsForTrack = useCallback(
     (trackId: string) => {

@@ -166,13 +166,7 @@ export const EmphasisAnimationSection: React.FC<
     if (stickerClip) return stickerClip.duration;
 
     return 5;
-  }, [
-    clipId,
-    project.timeline.tracks,
-    getTitleEngine,
-    getGraphicsEngine,
-    project.modifiedAt,
-  ]);
+  }, [clipId, project.timeline.tracks, getTitleEngine, getGraphicsEngine]);
 
   const currentAnimation = useMemo((): EmphasisAnimation => {
     const clip = project.timeline.tracks
@@ -206,13 +200,7 @@ export const EmphasisAnimationSection: React.FC<
     }
 
     return DEFAULT_EMPHASIS;
-  }, [
-    clipId,
-    project.timeline.tracks,
-    getTitleEngine,
-    getGraphicsEngine,
-    project.modifiedAt,
-  ]);
+  }, [clipId, project.timeline.tracks, getTitleEngine, getGraphicsEngine]);
 
   const handleAnimationChange = useCallback(
     (updates: Partial<EmphasisAnimation>) => {

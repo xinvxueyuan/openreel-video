@@ -17,11 +17,11 @@ interface MotionPathSectionProps {
 export const MotionPathSection: React.FC<MotionPathSectionProps> = ({
   clipId,
 }) => {
-  const { getClip, project } = useProjectStore();
+  const { getClip } = useProjectStore();
   const { motionPathMode, motionPathClipId, setMotionPathMode } = useUIStore();
   const getGraphicsEngine = useEngineStore((state) => state.getGraphicsEngine);
   const getTitleEngine = useEngineStore((state) => state.getTitleEngine);
-  const [forceUpdate, setForceUpdate] = useState(0);
+  const [_forceUpdate, setForceUpdate] = useState(0);
 
   const clip = useMemo(() => {
     const timelineClip = getClip(clipId);
@@ -42,13 +42,13 @@ export const MotionPathSection: React.FC<MotionPathSectionProps> = ({
     if (textClip) return textClip;
 
     return undefined;
-  }, [clipId, getClip, getGraphicsEngine, getTitleEngine, project.modifiedAt]);
+  }, [clipId, getClip, getGraphicsEngine, getTitleEngine]);
 
   const gsapEngine = useMemo(() => getGSAPEngine(), []);
 
   const motionPath = useMemo(() => {
     return gsapEngine.getMotionPath(clipId);
-  }, [clipId, gsapEngine, forceUpdate]);
+  }, [clipId, gsapEngine]);
 
   const isEditing = motionPathMode && motionPathClipId === clipId;
 

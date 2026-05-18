@@ -1585,9 +1585,7 @@ export const useProjectStore = create<ProjectState>()(
               } catch { /* dir handle stale or unavailable */ }
             }
 
-            if (restored > 0) {
-              console.info(`[ProjectStore] Auto-restored ${restored} asset(s) from file handles`);
-            }
+            void restored;
           })();
         }
       },

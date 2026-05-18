@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback, useState } from 'react';
+﻿import { useEffect, useRef, useCallback, useState } from 'react';
 import { useProjectStore } from '../../../stores/project-store';
 import { useUIStore } from '../../../stores/ui-store';
 import { useCanvasStore, type ResizeHandle } from '../../../stores/canvas-store';
@@ -398,7 +398,7 @@ export function Canvas() {
 
     const sortedLayerIds = [...artboard.layerIds].reverse();
     sortedLayerIds.forEach((layerId) => {
-      const layer = project.layers[layerId];
+      const layer = project?.layers[layerId];
       if (!layer || !layer.visible) return;
       if (!isLayerInViewport(layer, viewport)) return;
       renderLayerWithChildren(ctx, layer, project);
@@ -407,7 +407,7 @@ export function Canvas() {
     ctx.restore();
 
     selectedLayerIds.forEach((layerId) => {
-      const layer = project.layers[layerId];
+      const layer = project?.layers[layerId];
       if (!layer) return;
       const { x, y, width, height, rotation } = layer.transform;
 
@@ -586,7 +586,7 @@ export function Canvas() {
     }
 
     if (crop.isActive && crop.layerId && crop.cropRect) {
-      const cropLayer = project.layers[crop.layerId];
+      const cropLayer = project?.layers[crop.layerId];
       if (cropLayer) {
         const { x: layerX, y: layerY, width: layerW, height: layerH } = cropLayer.transform;
         const { x: cropX, y: cropY, width: cropW, height: cropH } = crop.cropRect;
@@ -666,7 +666,7 @@ export function Canvas() {
     }
 
     ctx.restore();
-  }, [artboard, project, zoom, panX, panY, selectedLayerIds, showGrid, gridSize, crop, smartGuides, drawing, penSettings, brushSettings, activeTool, isMarqueeSelecting, marqueeRect]);
+  }, [artboard, project, marqueeRect, gradientDrag, zoom, panX, panY, selectedLayerIds, showGrid, drawing.isDrawing, drawing.currentPath, isMarqueeSelecting, activeTool, smartGuides, crop.isActive, crop.layerId, crop.cropRect, gridSize, brushSettings.color, brushSettings.size, brushSettings.opacity, penSettings.color, penSettings.width, penSettings.opacity, gradientSettings.reverse, gradientSettings.colors, gradientSettings.type, gradientSettings.opacity]);
 
   const scheduleRender = useCallback(() => {
     if (renderScheduledRef.current) return;
@@ -711,9 +711,9 @@ export function Canvas() {
 
   useEffect(() => {
     if (!project) return;
-    const currentLayerIds = new Set(Object.keys(project.layers));
+    const currentLayerIds = new Set(Object.keys(project?.layers));
     clearLayerCache(currentLayerIds);
-  }, [project?.layers]);
+  }, [project, project?.layers]);
 
   const screenToCanvas = useCallback(
     (screenX: number, screenY: number) => {
@@ -742,7 +742,7 @@ export function Canvas() {
       if (!artboard || !project) return null;
 
       for (const layerId of artboard.layerIds) {
-        const layer = project.layers[layerId];
+        const layer = project?.layers[layerId];
         if (!layer || !layer.visible || layer.locked) continue;
 
         const { transform } = layer;
@@ -768,7 +768,7 @@ export function Canvas() {
       if (!canvas) return null;
 
       const layerId = selectedLayerIds[0];
-      const layer = project.layers[layerId];
+      const layer = project?.layers[layerId];
       if (!layer) return null;
 
       const { x, y, width, height, rotation } = layer.transform;
@@ -908,7 +908,7 @@ export function Canvas() {
       if (activeTool === 'brush') {
         const layerId = findLayerAtPoint(x, y);
         if (layerId && project) {
-          const layer = project.layers[layerId];
+          const layer = project?.layers[layerId];
           if (layer?.type === 'image') {
             const imageLayer = layer as ImageLayer;
             const asset = project.assets[imageLayer.sourceId];
@@ -955,7 +955,7 @@ export function Canvas() {
       if (activeTool === 'eraser') {
         const layerId = findLayerAtPoint(x, y);
         if (layerId && project) {
-          const layer = project.layers[layerId];
+          const layer = project?.layers[layerId];
           if (layer?.type === 'image') {
             const imageLayer = layer as ImageLayer;
             const asset = project.assets[imageLayer.sourceId];
@@ -1014,7 +1014,7 @@ export function Canvas() {
       if (activeTool === 'paint-bucket') {
         const layerId = findLayerAtPoint(x, y);
         if (layerId && project) {
-          const layer = project.layers[layerId];
+          const layer = project?.layers[layerId];
           if (layer?.type === 'image') {
             const imageLayer = layer as ImageLayer;
             const asset = project.assets[imageLayer.sourceId];
@@ -1089,7 +1089,7 @@ export function Canvas() {
       if (activeTool === 'smudge' || activeTool === 'blur' || activeTool === 'sharpen') {
         const layerId = findLayerAtPoint(x, y);
         if (layerId && project) {
-          const layer = project.layers[layerId];
+          const layer = project?.layers[layerId];
           if (layer?.type === 'image') {
             const imageLayer = layer as ImageLayer;
             const asset = project.assets[imageLayer.sourceId];
@@ -1149,7 +1149,7 @@ export function Canvas() {
       if (activeTool === 'dodge' || activeTool === 'burn' || activeTool === 'sponge' || activeTool === 'spot-healing') {
         const layerId = findLayerAtPoint(x, y);
         if (layerId && project) {
-          const layer = project.layers[layerId];
+          const layer = project?.layers[layerId];
           if (layer?.type === 'image') {
             const imageLayer = layer as ImageLayer;
             const asset = project.assets[imageLayer.sourceId];
@@ -1214,7 +1214,7 @@ export function Canvas() {
       if (activeTool === 'clone-stamp' || activeTool === 'healing-brush') {
         const layerId = findLayerAtPoint(x, y);
         if (layerId && project) {
-          const layer = project.layers[layerId];
+          const layer = project?.layers[layerId];
           if (layer?.type === 'image') {
             const imageLayer = layer as ImageLayer;
             const asset = project.assets[imageLayer.sourceId];
@@ -1374,7 +1374,7 @@ export function Canvas() {
         }
       }
     },
-    [activeTool, screenToCanvas, findLayerAtPoint, selectLayer, deselectAllLayers, startDrag, selectedLayerIds, startDrawing, startMarqueeSelect, getHandleAtPoint, project, setActiveResizeHandle, zoom, setZoom, startCrop, setBrushSettings, eraserSettings]
+    [screenToCanvas, activeTool, startDrag, startDrawing, deselectAllLayers, startMarqueeSelect, findLayerAtPoint, selectLayer, getHandleAtPoint, project, setActiveResizeHandle, selectedLayerIds, brushSettings.size, brushSettings.hardness, brushSettings.opacity, brushSettings.flow, brushSettings.color, brushSettings.blendMode, eraserSettings.size, eraserSettings.hardness, eraserSettings.opacity, eraserSettings.flow, eraserSettings.mode, paintBucketSettings.tolerance, paintBucketSettings.contiguous, paintBucketSettings.antiAlias, paintBucketSettings.opacity, paintBucketSettings.color, forceRender, updateLayer, smudgeSettings.size, smudgeSettings.strength, smudgeSettings.fingerPainting, smudgeSettings.sampleAllLayers, blurSharpenSettings.size, blurSharpenSettings.strength, blurSharpenSettings.sampleAllLayers, dodgeBurnSettings.size, dodgeBurnSettings.range, dodgeBurnSettings.exposure, spongeSettings.size, spongeSettings.mode, spongeSettings.flow, spotHealingSettings.size, spotHealingSettings.type, spotHealingSettings.sampleAllLayers, cloneStampSettings.size, cloneStampSettings.hardness, cloneStampSettings.opacity, cloneStampSettings.flow, cloneStampSettings.aligned, healingBrushSettings.size, healingBrushSettings.hardness, healingBrushSettings.aligned, setZoom, zoom, setBrushSettings, startCrop]
   );
 
   const handleMouseMove = useCallback(
@@ -1792,7 +1792,7 @@ export function Canvas() {
 
       const found: string[] = [];
       for (const layerId of artboard.layerIds) {
-        const layer = project.layers[layerId];
+        const layer = project?.layers[layerId];
         if (!layer || !layer.visible || layer.locked) continue;
 
         const { transform } = layer;
@@ -2019,7 +2019,7 @@ export function Canvas() {
     setActiveResizeHandle(null);
     endDrag();
     clearSmartGuides();
-  }, [endDrag, clearSmartGuides, drawing.isDrawing, finishDrawing, addPathLayer, penSettings, brushSettings, scheduleRender, dragMode, endMarqueeSelect, findLayersInRect, selectLayers, setActiveResizeHandle, activeTool, gradientDrag, gradientSettings, artboard, addShapeLayer, updateLayer, project, selectedLayerIds]);
+  }, [drawing.isDrawing, gradientDrag, activeTool, dragMode, setActiveResizeHandle, endDrag, clearSmartGuides, finishDrawing, scheduleRender, addPathLayer, brushSettings.color, brushSettings.size, penSettings.color, penSettings.width, artboard, gradientSettings.reverse, gradientSettings.colors, gradientSettings.opacity, gradientSettings.type, addShapeLayer, project?.layers, project?.assets, selectedLayerIds, updateLayer, forceRender, endMarqueeSelect, findLayersInRect, selectLayers]);
 
   const handleContextMenu = useCallback(
     (e: React.MouseEvent) => {
@@ -2134,7 +2134,7 @@ export function Canvas() {
 
   const handleAlignLeft = useCallback(() => {
     if (selectedLayerIds.length < 2 || !project) return;
-    const layers = selectedLayerIds.map((id) => project.layers[id]).filter(Boolean);
+    const layers = selectedLayerIds.map((id) => project?.layers[id]).filter(Boolean);
     const minX = Math.min(...layers.map((l) => l.transform.x));
     layers.forEach((layer) => {
       updateLayerTransform(layer.id, { x: minX });
@@ -2143,7 +2143,7 @@ export function Canvas() {
 
   const handleAlignCenter = useCallback(() => {
     if (selectedLayerIds.length < 2 || !project) return;
-    const layers = selectedLayerIds.map((id) => project.layers[id]).filter(Boolean);
+    const layers = selectedLayerIds.map((id) => project?.layers[id]).filter(Boolean);
     const centers = layers.map((l) => l.transform.x + l.transform.width / 2);
     const avgCenter = centers.reduce((a, b) => a + b, 0) / centers.length;
     layers.forEach((layer) => {
@@ -2153,7 +2153,7 @@ export function Canvas() {
 
   const handleAlignRight = useCallback(() => {
     if (selectedLayerIds.length < 2 || !project) return;
-    const layers = selectedLayerIds.map((id) => project.layers[id]).filter(Boolean);
+    const layers = selectedLayerIds.map((id) => project?.layers[id]).filter(Boolean);
     const maxRight = Math.max(...layers.map((l) => l.transform.x + l.transform.width));
     layers.forEach((layer) => {
       updateLayerTransform(layer.id, { x: maxRight - layer.transform.width });
@@ -2162,7 +2162,7 @@ export function Canvas() {
 
   const handleAlignTop = useCallback(() => {
     if (selectedLayerIds.length < 2 || !project) return;
-    const layers = selectedLayerIds.map((id) => project.layers[id]).filter(Boolean);
+    const layers = selectedLayerIds.map((id) => project?.layers[id]).filter(Boolean);
     const minY = Math.min(...layers.map((l) => l.transform.y));
     layers.forEach((layer) => {
       updateLayerTransform(layer.id, { y: minY });
@@ -2171,7 +2171,7 @@ export function Canvas() {
 
   const handleAlignMiddle = useCallback(() => {
     if (selectedLayerIds.length < 2 || !project) return;
-    const layers = selectedLayerIds.map((id) => project.layers[id]).filter(Boolean);
+    const layers = selectedLayerIds.map((id) => project?.layers[id]).filter(Boolean);
     const middles = layers.map((l) => l.transform.y + l.transform.height / 2);
     const avgMiddle = middles.reduce((a, b) => a + b, 0) / middles.length;
     layers.forEach((layer) => {
@@ -2181,7 +2181,7 @@ export function Canvas() {
 
   const handleAlignBottom = useCallback(() => {
     if (selectedLayerIds.length < 2 || !project) return;
-    const layers = selectedLayerIds.map((id) => project.layers[id]).filter(Boolean);
+    const layers = selectedLayerIds.map((id) => project?.layers[id]).filter(Boolean);
     const maxBottom = Math.max(...layers.map((l) => l.transform.y + l.transform.height));
     layers.forEach((layer) => {
       updateLayerTransform(layer.id, { y: maxBottom - layer.transform.height });
@@ -2324,7 +2324,7 @@ function renderLayerWithChildren(
 
     const sortedChildIds = [...group.childIds].reverse();
     sortedChildIds.forEach((childId) => {
-      const child = project.layers[childId];
+      const child = project?.layers[childId];
       if (child && child.visible) {
         renderLayer(ctx, child, project);
       }

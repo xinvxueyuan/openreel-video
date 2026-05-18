@@ -220,6 +220,7 @@ export const InspectorPanel: React.FC = () => {
     (state) => state.finishEffectApplication,
   );
   const selectedClipIds = getSelectedClipIds();
+  const selectedClipKey = selectedClipIds.join("|");
   const pausePlayback = useTimelineStore((state) => state.pause);
   const lockPlayback = useTimelineStore((state) => state.lockPlayback);
   const unlockPlayback = useTimelineStore((state) => state.unlockPlayback);
@@ -241,7 +242,7 @@ export const InspectorPanel: React.FC = () => {
 
   useEffect(() => {
     setExpandedRecipeApplicationId(null);
-  }, [selectedClipIds.join("|")]);
+  }, [selectedClipKey]);
 
   // Check if a subtitle is selected
   const selectedSubtitleId = useMemo(() => {
@@ -254,12 +255,12 @@ export const InspectorPanel: React.FC = () => {
   const selectedSubtitle = useMemo(() => {
     if (!selectedSubtitleId) return null;
     return getSubtitle(selectedSubtitleId) || null;
-  }, [selectedSubtitleId, getSubtitle, project.timeline.subtitles]);
+  }, [selectedSubtitleId, getSubtitle]);
 
   const selectedTimelineClip = useMemo(() => {
     if (selectedClipIds.length !== 1) return null;
     return getClip(selectedClipIds[0]) || null;
-  }, [getClip, project.modifiedAt, selectedClipIds]);
+  }, [getClip, selectedClipIds]);
 
   // Get selected clip (check regular clips, text clips, and shape clips)
   const selectedClip = useMemo(() => {
@@ -354,13 +355,7 @@ export const InspectorPanel: React.FC = () => {
       };
     }
     return null;
-  }, [
-    selectedClipIds,
-    getClip,
-    getTitleEngine,
-    getGraphicsEngine,
-    project.modifiedAt,
-  ]);
+  }, [selectedClipIds, getClip, getTitleEngine, getGraphicsEngine]);
 
   // Force re-render trigger - increment to force recalculation of engine values
   const [updateCounter, forceUpdate] = React.useReducer((x) => x + 1, 0);

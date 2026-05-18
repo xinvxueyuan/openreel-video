@@ -130,12 +130,12 @@ export const AdjustmentLayerSection: React.FC<AdjustmentLayerSectionProps> = ({
 
   const allLayers = useMemo(() => {
     return adjustmentLayerEngine?.getAllLayers() || [];
-  }, [adjustmentLayerEngine, project.modifiedAt]);
+  }, [adjustmentLayerEngine]);
 
   const trackLayers = useMemo(() => {
     if (!currentTrack) return [];
     return adjustmentLayerEngine?.getLayersForTrack(currentTrack.id) || [];
-  }, [adjustmentLayerEngine, currentTrack, project.modifiedAt]);
+  }, [adjustmentLayerEngine, currentTrack]);
 
   const handleCreateLayer = useCallback(() => {
     if (!adjustmentLayerEngine || !currentTrack) return;

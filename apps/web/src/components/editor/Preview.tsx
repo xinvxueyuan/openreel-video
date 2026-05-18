@@ -190,49 +190,6 @@ const applyStabilizationTransform = (
   ) as ClipTransform;
 };
 
-const renderFrameWithGPU = async (
-  renderer: Renderer,
-  frame: ImageBitmap,
-  transform: ClipTransform,
-  _canvasWidth: number,
-  _canvasHeight: number,
-): Promise<ImageBitmap | null> => {
-  try {
-    const device = renderer.getDevice();
-    if (!device) {
-      return null;
-    }
-
-    renderer.beginFrame();
-
-    const texture = renderer.createTextureFromImage(frame);
-
-    const gpuTransform = {
-      position: transform.position,
-      scale: transform.scale,
-      rotation: transform.rotation,
-      anchor: transform.anchor,
-      opacity: transform.opacity,
-      borderRadius: transform.borderRadius,
-    };
-
-    renderer.renderLayer({
-      texture,
-      transform: gpuTransform,
-      effects: [],
-      opacity: transform.opacity,
-      borderRadius: transform.borderRadius || 0,
-    });
-
-    const result = await renderer.endFrame();
-    renderer.releaseTexture(texture);
-
-    return result;
-  } catch {
-    return null;
-  }
-};
-
 const renderAllLayersWithGPU = async (
   renderer: Renderer,
   layers: GPULayer[],
@@ -690,7 +647,7 @@ export const Preview: React.FC = () => {
   const allTextClips = useMemo(() => {
     const titleEngine = getTitleEngine();
     return titleEngine?.getAllTextClips() || [];
-  }, [getTitleEngine, project.modifiedAt]);
+  }, [getTitleEngine]);
 
   const getGraphicsEngine = useEngineStore((state) => state.getGraphicsEngine);
   const allShapeClips = useMemo(() => {
@@ -699,7 +656,7 @@ export const Preview: React.FC = () => {
     const svgs = graphicsEngine?.getAllSVGClips() || [];
     const stickers = graphicsEngine?.getAllStickerClips() || [];
     return [...shapes, ...svgs, ...stickers];
-  }, [getGraphicsEngine, project.modifiedAt]);
+  }, [getGraphicsEngine]);
 
   // Get subtitles from project timeline
   const allSubtitles = useMemo(() => {
@@ -870,7 +827,7 @@ export const Preview: React.FC = () => {
   );
 
   const particleEngine = React.useMemo(() => getParticleEngine(), []);
-  const [particleUpdateTrigger, setParticleUpdateTrigger] = React.useState(
+  const [_particleUpdateTrigger, setParticleUpdateTrigger] = React.useState(
     () => particleEngine.getChangeVersion()
   );
 
@@ -883,7 +840,7 @@ export const Preview: React.FC = () => {
 
   const particleEffects = React.useMemo(() => {
     return particleEngine.getAllEffects();
-  }, [particleEngine, particleUpdateTrigger]);
+  }, [particleEngine]);
 
   // Calculate the actual end time for playback (where clips actually end)
   // This needs to recalculate whenever the timeline changes
@@ -925,11 +882,12 @@ export const Preview: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    const decoderCache = decoderCacheRef.current;
     return () => {
-      for (const entry of decoderCacheRef.current.values()) {
+      for (const entry of decoderCache.values()) {
         entry.input[Symbol.dispose]?.();
       }
-      decoderCacheRef.current.clear();
+      decoderCache.clear();
 
       releaseScrubVideoElements();
 
@@ -1016,7 +974,7 @@ export const Preview: React.FC = () => {
         rendererInitializedRef.current = false;
       }
     };
-  }, []);
+  }, [settings.height, settings.width]);
 
   /**
    * Handle canvas resize events
@@ -2142,18 +2100,7 @@ export const Preview: React.FC = () => {
 
       return hasRenderedFrame;
     },
-    [
-      timelineTracks,
-      getMediaItem,
-      decodeClipFrame,
-      settings.width,
-      settings.height,
-      allTextClips,
-      allShapeClips,
-      allSubtitles,
-      renderOverlayClipsInTrackOrder,
-      isDark,
-    ],
+    [timelineTracks, decodeClipFrame, settings.width, settings.height, allTextClips, allShapeClips, allSubtitles, renderOverlayClipsInTrackOrder, isDark],
   );
 
   const renderFrameDirectlyRef = useRef(renderFrameDirectly);
@@ -2451,7 +2398,7 @@ export const Preview: React.FC = () => {
 
       return { canUse: true, clips: allVideoClips, imageClips };
     },
-    [timelineTracks, getMediaItem, allTextClips, allShapeClips, getResolvedClipAudioEffects],
+    [timelineTracks, getMediaItem, getResolvedClipAudioEffects],
   );
 
   // Start native video playback using hardware-accelerated video elements (handles multiple clips)
@@ -3030,353 +2977,6 @@ export const Preview: React.FC = () => {
       return results.sort((a, b) => a.trackIndex - b.trackIndex);
     };
 
-    const findClipAtTime = (time: number) => {
-      const results = findAllClipsAtTime(time);
-      return results.length > 0 ? results[0] : null;
-    };
-
-    const startPlaybackForClip = async (
-      clip: (typeof timelineTracksRef.current)[0]["clips"][0],
-      _track: (typeof timelineTracksRef.current)[0],
-      timelinePosition: number,
-    ) => {
-      try {
-        const mediaItem = getMediaItem(clip.mediaId);
-        if (!mediaItem?.blob) {
-          const clipEndTime = clip.startTime + clip.duration;
-          const nextResult = findClipAtTime(clipEndTime);
-          if (nextResult && clipEndTime < actualEndTime && isActive) {
-            startPlaybackForClip(
-              nextResult.clip,
-              nextResult.track,
-              clipEndTime,
-            );
-          } else {
-            pause();
-          }
-          return;
-        }
-
-        try {
-          const mediabunny = await import("mediabunny");
-          const { Input, ALL_FORMATS, BlobSource, CanvasSink } = mediabunny;
-
-          const input = new Input({
-            source: new BlobSource(mediaItem.blob),
-            formats: ALL_FORMATS,
-          });
-
-          const videoTrack = await input.getPrimaryVideoTrack();
-          if (!videoTrack || !isActive) {
-            input[Symbol.dispose]?.();
-            return;
-          }
-
-          const canDecode = await videoTrack.canDecode();
-          if (!canDecode || !isActive) {
-            input[Symbol.dispose]?.();
-            return;
-          }
-
-          // Ensure canvas has valid dimensions BEFORE creating CanvasSink
-          if (canvas.width === 0 || canvas.height === 0) {
-            console.warn(
-              "[Preview] Canvas has zero dimensions, setting from project settings",
-            );
-            canvas.width = settings.width;
-            canvas.height = settings.height;
-          }
-
-          const sink = new CanvasSink(videoTrack, {
-            poolSize: 3,
-          });
-
-          const speedEngine = getSpeedEngine();
-          const clipLocalTime = Math.max(0, timelinePosition - clip.startTime);
-
-          let currentSpeed = speedEngine.getClipSpeed(clip.id);
-          let isReverse = speedEngine.isReverse(clip.id);
-          let speedSourceClip = clip.id;
-
-          // If video clip has default speed, check for linked audio clip's speed
-          if (currentSpeed === 1 && !isReverse) {
-            const tracks = timelineTracksRef.current;
-            const audioTracks = tracks.filter((t) => t.type === "audio");
-
-            for (const audioTrack of audioTracks) {
-              for (const audioClip of audioTrack.clips) {
-                if (
-                  audioClip.mediaId === clip.mediaId &&
-                  Math.abs(audioClip.startTime - clip.startTime) < 0.01
-                ) {
-                  const linkedSpeed = speedEngine.getClipSpeed(audioClip.id);
-                  const linkedReverse = speedEngine.isReverse(audioClip.id);
-
-                  if (linkedSpeed !== 1 || linkedReverse) {
-                    currentSpeed = linkedSpeed;
-                    isReverse = linkedReverse;
-                    speedSourceClip = audioClip.id;
-                    break;
-                  }
-                }
-              }
-              if (currentSpeed !== 1 || isReverse) break;
-            }
-          }
-
-          const adjustedLocalTime = speedEngine.getSourceTimeAtPlaybackTime(
-            speedSourceClip,
-            clipLocalTime,
-          );
-          const mediaStartTime = (clip.inPoint || 0) + adjustedLocalTime;
-
-          const mediaEndTime = Math.min(
-            clip.outPoint || (clip.inPoint || 0) + clip.duration,
-            (await videoTrack.computeDuration()) || Infinity,
-          );
-
-          await setupAudioFromAudioTrack(timelinePosition);
-
-          const ctx = canvas.getContext("2d");
-          if (!ctx) {
-            console.error("[Preview] Failed to get 2D context from canvas");
-            input[Symbol.dispose]?.();
-            return;
-          }
-
-          const frameDuration = 1000 / 30;
-
-          let currentMediaTime = mediaStartTime;
-          let currentPlayheadTime = timelinePosition;
-          let lastFrameTimestamp = performance.now();
-          let frameCount = 0;
-
-          const processNextFrame = async () => {
-            if (!isActive) {
-              input[Symbol.dispose]?.();
-              return;
-            }
-
-            try {
-              if (currentMediaTime >= mediaEndTime) {
-                input[Symbol.dispose]?.();
-                cleanupAudioResources();
-
-                const clipEndTime = clip.startTime + clip.duration;
-                const nextResult = findClipAtTime(clipEndTime);
-
-                if (nextResult && clipEndTime < actualEndTime && isActive) {
-                  setPlayheadPosition(clipEndTime);
-                  startPlaybackForClip(
-                    nextResult.clip,
-                    nextResult.track,
-                    clipEndTime,
-                  );
-                } else if (!isScrubbingRef.current) {
-                  setPlayheadPosition(0);
-                  startPositionRef.current = 0;
-                  pause();
-                }
-                return;
-              }
-
-              const frameResult = await (
-                sink as {
-                  getCanvas: (time: number) => Promise<{
-                    canvas: HTMLCanvasElement | OffscreenCanvas;
-                    timestamp: number;
-                    duration: number;
-                  } | null>;
-                }
-              ).getCanvas(currentMediaTime);
-
-              frameCount++;
-
-              if (!frameResult || !frameResult.canvas) {
-                console.warn("[Preview] No frame at time", currentMediaTime);
-                const skipTime = frameDuration / 1000;
-                currentPlayheadTime += skipTime;
-                currentMediaTime += skipTime * currentSpeed;
-                if (isActive) {
-                  animationRef.current =
-                    requestAnimationFrame(processNextFrame);
-                }
-                return;
-              }
-
-              const { canvas: frameCanvas, duration } = frameResult;
-
-              const frameWidth = "width" in frameCanvas ? frameCanvas.width : 0;
-              const frameHeight =
-                "height" in frameCanvas ? frameCanvas.height : 0;
-              if (frameWidth === 0 || frameHeight === 0) {
-                console.warn("[Preview] Frame has zero dimensions, skipping");
-                const skipTime = frameDuration / 1000;
-                currentPlayheadTime += skipTime;
-                currentMediaTime += skipTime * currentSpeed;
-                if (isActive) {
-                  animationRef.current =
-                    requestAnimationFrame(processNextFrame);
-                }
-                return;
-              }
-
-              const currentPlayhead = currentPlayheadTime;
-
-              if (currentPlayhead >= actualEndTime) {
-                if (!isScrubbingRef.current) {
-                  setPlayheadPosition(0);
-                  startPositionRef.current = 0;
-                  pause();
-                }
-                input[Symbol.dispose]?.();
-                return;
-              }
-
-              const clipLocalTime = currentPlayhead - clip.startTime;
-              let transform = getAnimatedTransform(
-                (clip.transform as ClipTransform) || DEFAULT_TRANSFORM,
-                clip.keyframes,
-                clipLocalTime,
-              );
-
-              if (
-                clip.emphasisAnimation &&
-                clip.emphasisAnimation.type !== "none"
-              ) {
-                const emphasisState = applyEmphasisAnimation(
-                  clip.emphasisAnimation,
-                  clipLocalTime,
-                );
-                transform = {
-                  ...transform,
-                  opacity: transform.opacity * emphasisState.opacity,
-                  scale: {
-                    x:
-                      transform.scale.x *
-                      emphasisState.scale *
-                      emphasisState.scaleX,
-                    y:
-                      transform.scale.y *
-                      emphasisState.scale *
-                      emphasisState.scaleY,
-                  },
-                  position: {
-                    x:
-                      transform.position.x +
-                      emphasisState.offsetX * canvas.width,
-                    y:
-                      transform.position.y +
-                      emphasisState.offsetY * canvas.height,
-                  },
-                  rotation: transform.rotation + emphasisState.rotation,
-                };
-              }
-
-              const useGPU =
-                rendererRef.current && rendererRef.current.type === "webgpu";
-              const preparedFrame = await preparePreviewFrame(
-                clip.id,
-                frameCanvas,
-                Boolean(useGPU),
-              );
-              const stabilizedTransform = applyStabilizationTransform(
-                clip,
-                transform,
-                currentMediaTime,
-                canvas.width,
-                canvas.height,
-                preparedFrame.frame.width,
-                preparedFrame.frame.height,
-              );
-
-              ctx.fillStyle = "#000000";
-              ctx.fillRect(0, 0, canvas.width, canvas.height);
-              if (useGPU && preparedFrame.frame instanceof ImageBitmap) {
-                const gpuResult = await renderFrameWithGPU(
-                  rendererRef.current!,
-                  preparedFrame.frame,
-                  stabilizedTransform,
-                  canvas.width,
-                  canvas.height,
-                );
-                if (gpuResult) {
-                  ctx.drawImage(gpuResult, 0, 0, canvas.width, canvas.height);
-                  gpuResult.close();
-                } else {
-                  drawFrameWithTransform(
-                    ctx,
-                    preparedFrame.frame,
-                    stabilizedTransform,
-                    canvas.width,
-                    canvas.height,
-                  );
-                }
-              } else {
-                drawFrameWithTransform(
-                  ctx,
-                  preparedFrame.frame,
-                  stabilizedTransform,
-                  canvas.width,
-                  canvas.height,
-                );
-              }
-              preparedFrame.cleanup();
-
-              const nowPh = performance.now();
-              if (nowPh - lastPlayheadUpdateRef.current >= PLAYHEAD_UPDATE_THROTTLE_MS) {
-                lastPlayheadUpdateRef.current = nowPh;
-                setPlayheadPosition(currentPlayhead);
-              }
-
-              const now = performance.now();
-              const elapsed = now - lastFrameTimestamp;
-              const actualFrameDuration =
-                duration > 0 ? duration * 1000 : frameDuration;
-              const targetTime = actualFrameDuration / rateRef.current;
-
-              const normalTimeAdvance = actualFrameDuration / 1000;
-              const mediaTimeAdvance = normalTimeAdvance * currentSpeed;
-              currentPlayheadTime += normalTimeAdvance;
-              currentMediaTime += mediaTimeAdvance;
-
-              const delay = Math.max(0, targetTime - elapsed);
-              lastFrameTimestamp = now;
-
-              if (isActive) {
-                if (delay > 0) {
-                  setTimeout(() => {
-                    if (isActive) {
-                      animationRef.current =
-                        requestAnimationFrame(processNextFrame);
-                    }
-                  }, delay);
-                } else {
-                  animationRef.current =
-                    requestAnimationFrame(processNextFrame);
-                }
-              }
-            } catch (error) {
-              console.error("[Preview] Frame error:", error);
-              input[Symbol.dispose]?.();
-              pause();
-            }
-          };
-
-          animationRef.current = requestAnimationFrame(processNextFrame);
-        } catch (error) {
-          console.error("[Preview] MediaBunny setup error:", error);
-          pause();
-        }
-      } catch (outerError) {
-        console.error(
-          "[Preview] startPlaybackForClip outer error:",
-          outerError,
-        );
-        pause();
-      }
-    };
-
     const initClipResources = async (
       clip: (typeof timelineTracksRef.current)[0]["clips"][0],
       trackIndex: number,
@@ -3582,7 +3182,6 @@ export const Preview: React.FC = () => {
 
       const frameDuration = 1000 / 30;
       let lastFrameTimestamp = performance.now();
-      let frameCount = 0;
       let isProcessingFrame = false;
 
       const processMultiTrackFrame = async () => {
@@ -4082,7 +3681,9 @@ export const Preview: React.FC = () => {
             try {
               lastGoodFrameRef.current?.close();
               lastGoodFrameRef.current = await createImageBitmap(offscreenCanvasRef.current!);
-            } catch {}
+            } catch {
+              // Refreshing the cached preview frame is best-effort during playback.
+            }
           } else if (lastGoodFrameRef.current) {
             ctx.drawImage(
               lastGoodFrameRef.current,
@@ -4109,7 +3710,6 @@ export const Preview: React.FC = () => {
             mainCtx.drawImage(offscreenCanvasRef.current!, 0, 0);
           }
 
-          frameCount++;
           masterClock.reportVideoTime(currentPlayhead);
           const nowMulti = performance.now();
           if (nowMulti - lastPlayheadUpdateRef.current >= PLAYHEAD_UPDATE_THROTTLE_MS) {
@@ -4505,14 +4105,7 @@ export const Preview: React.FC = () => {
       centerY,
       displayScale,
     };
-  }, [
-    selectedClip,
-    clipAtPlayhead,
-    settings.width,
-    settings.height,
-    canvasSize,
-    liveTransform,
-  ]);
+  }, [selectedClip, clipAtPlayhead, settings.width, settings.height, liveTransform]);
 
   const textClipBounds = useMemo(() => {
     if (!selectedTextClip || !canvasRef.current || !overlayRef.current)
@@ -4576,7 +4169,7 @@ export const Preview: React.FC = () => {
       displayScale,
       isTextClip: true,
     };
-  }, [selectedTextClip, settings.width, settings.height, canvasSize]);
+  }, [selectedTextClip, settings.width, settings.height]);
 
   const selectedShapeClipId = useMemo(() => {
     const shapeClipSelection = selectedItems.find(
@@ -4679,7 +4272,7 @@ export const Preview: React.FC = () => {
       displayScale,
       isShapeClip: true,
     };
-  }, [selectedShapeClip, settings.width, settings.height, canvasSize]);
+  }, [selectedShapeClip, settings.width, settings.height]);
 
   const getGraphicClipDisplayBounds = useCallback(
     (clip: ShapeClip | SVGClip | StickerClip) => {
@@ -4867,13 +4460,7 @@ export const Preview: React.FC = () => {
       centerY: topY + subtitleHeight / 2,
       displayScale,
     };
-  }, [
-    selectedSubtitleObj,
-    settings.width,
-    settings.height,
-    canvasSize,
-    playheadPosition,
-  ]);
+  }, [selectedSubtitleObj, settings.width, settings.height, playheadPosition]);
 
   const handleHandleMouseDown = useCallback(
     (e: React.MouseEvent, handle: HandlePosition) => {
@@ -5365,21 +4952,7 @@ export const Preview: React.FC = () => {
         });
       }
     },
-    [
-      interactionMode,
-      activeHandle,
-      clipBounds,
-      selectedClip,
-      clipAtPlayhead,
-      updateClipTransform,
-      settings.width,
-      settings.height,
-      lockAspectRatio,
-      interactionTargetType,
-      textClipBounds,
-      activeTextClip,
-      updateTextTransform,
-    ],
+    [interactionMode, interactionTargetType, textClipBounds, activeTextClip, shapeClipBounds, activeShapeClip, clipBounds, selectedClip, clipAtPlayhead, activeHandle, settings.width, settings.height, lockAspectRatio, updateTextTransform, updateShapeTransform, updateClipTransform],
   );
 
   const handleMouseUp = useCallback(() => {

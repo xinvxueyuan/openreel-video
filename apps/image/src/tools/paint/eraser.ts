@@ -142,6 +142,7 @@ export class EraserTool {
 
       case 'brush':
       default:
+      {
         const hardness = settings.hardness / 100;
         const gradient = ctx.createRadialGradient(x, y, 0, x, y, halfSize);
 
@@ -160,6 +161,7 @@ export class EraserTool {
         ctx.arc(x, y, halfSize, 0, Math.PI * 2);
         ctx.fill();
         break;
+      }
     }
 
     ctx.restore();

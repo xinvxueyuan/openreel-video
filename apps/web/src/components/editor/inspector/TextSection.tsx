@@ -201,12 +201,11 @@ export const TextSection: React.FC<TextSectionProps> = ({ clipId }) => {
     updateTextContent,
     updateTextStyle,
     updateTextTransform,
-    project,
   } = useProjectStore();
 
   const textClip = useMemo(
     () => getTextClip(clipId),
-    [clipId, getTextClip, project.modifiedAt],
+    [clipId, getTextClip],
   );
 
   const defaultStyle: TextStyle = {

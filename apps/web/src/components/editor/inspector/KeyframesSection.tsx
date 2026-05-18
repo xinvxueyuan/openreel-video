@@ -381,7 +381,7 @@ interface KeyframesSectionProps {
 export const KeyframesSection: React.FC<KeyframesSectionProps> = ({
   clipId,
 }) => {
-  const { getClip, updateClipKeyframes, project } = useProjectStore();
+  const { getClip, updateClipKeyframes } = useProjectStore();
   const playheadPosition = useTimelineStore((state) => state.playheadPosition);
   const getGraphicsEngine = useEngineStore((state) => state.getGraphicsEngine);
   const getTitleEngine = useEngineStore((state) => state.getTitleEngine);
@@ -407,8 +407,8 @@ export const KeyframesSection: React.FC<KeyframesSectionProps> = ({
     if (textClip) return textClip;
 
     return undefined;
-  }, [clipId, getClip, getGraphicsEngine, getTitleEngine, project.modifiedAt]);
-  const keyframes = clip?.keyframes || [];
+  }, [clipId, getClip, getGraphicsEngine, getTitleEngine]);
+  const keyframes = useMemo(() => clip?.keyframes ?? [], [clip?.keyframes]);
 
   const propertiesWithKeyframes = useMemo(() => {
     return [...new Set(keyframes.map((kf) => kf.property))];

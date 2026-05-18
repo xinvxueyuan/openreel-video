@@ -573,7 +573,7 @@ export const AssetsPanel: React.FC = () => {
       toast.warning(t("assetsPanel.toasts.unsavedAudioDiscarded"), t("assetsPanel.toasts.saveAudioHint"));
     }
     setActiveTabRaw(tab);
-  }, [activeTab, ttsHasUnsaved]);
+  }, [activeTab, t, ttsHasUnsaved]);
 
   const [isDragOver, setIsDragOver] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
@@ -658,7 +658,7 @@ export const AssetsPanel: React.FC = () => {
         setImportProgress("");
       }
     },
-    [importMedia],
+    [importMedia, t],
   );
 
   // Handle drag and drop import — capture FileSystemFileHandle for each dropped file
@@ -741,7 +741,7 @@ export const AssetsPanel: React.FC = () => {
       };
       input.click();
     },
-    [replaceMediaAsset],
+    [replaceMediaAsset, t],
   );
 
   const handleRelinkFromFolder = useCallback(async () => {
@@ -802,7 +802,7 @@ export const AssetsPanel: React.FC = () => {
     } else {
       toast.error("No matches found", "None of the files in the selected folder matched the missing assets by filename.");
     }
-  }, [replaceMediaAsset]);
+  }, [replaceMediaAsset, t]);
 
   // Handle drag start for timeline placement
   const handleItemDragStart = useCallback(
@@ -923,7 +923,7 @@ export const AssetsPanel: React.FC = () => {
       console.error("[KieAI] Failed to load media blob:", err);
       toast.error(t("assetsPanel.toasts.failedToOpenKieAI"), err instanceof Error ? err.message : "Unknown error");
     }
-  }, []);
+  }, [t]);
 
   const handleRetryKieAI = useCallback((item: MediaItem) => {
     if (!item.kieaiTaskId) return;

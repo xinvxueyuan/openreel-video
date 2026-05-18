@@ -247,7 +247,7 @@ export const TransitionInspector: React.FC<TransitionInspectorProps> = ({
   const bridge = getTransitionBridge();
   const transitionTypes = useMemo(
     () => bridge.getAvailableTransitionTypes(),
-    [],
+    [bridge],
   );
 
   // Local state for creating new transitions
@@ -272,7 +272,7 @@ export const TransitionInspector: React.FC<TransitionInspectorProps> = ({
       bridge.initialize();
     }
     return bridge.validateTransition(clipA, clipB, duration);
-  }, [clipA, clipB, duration]);
+  }, [bridge, clipA, clipB, duration]);
 
   // Handle type change
   const handleTypeChange = useCallback(
@@ -285,7 +285,7 @@ export const TransitionInspector: React.FC<TransitionInspectorProps> = ({
         onTransitionUpdate?.(transition.id, { type, params: defaultParams });
       }
     },
-    [transition, onTransitionUpdate],
+    [bridge, transition, onTransitionUpdate],
   );
 
   // Handle duration change
@@ -341,7 +341,7 @@ export const TransitionInspector: React.FC<TransitionInspectorProps> = ({
         result.error || "Could not apply transition",
       );
     }
-  }, [clipA, clipB, selectedType, duration, params, onTransitionCreate]);
+  }, [bridge, clipA, clipB, selectedType, duration, params, onTransitionCreate]);
 
   // Handle remove transition
   const handleRemove = useCallback(() => {
@@ -350,7 +350,7 @@ export const TransitionInspector: React.FC<TransitionInspectorProps> = ({
       onTransitionRemove?.(transition.id);
       toast.success("Transition Removed");
     }
-  }, [transition, onTransitionRemove]);
+  }, [transition, bridge, onTransitionRemove]);
 
   // Render type-specific parameters
   const renderTypeParams = () => {

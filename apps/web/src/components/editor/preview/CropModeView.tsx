@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Check, X, Maximize2 } from "lucide-react";
 import type { Clip } from "@openreel/core";
 
@@ -140,13 +140,37 @@ export const CropModeView: React.FC<CropModeViewProps> = ({
     setCropStart(crop);
   };
 
-  const handleMouseMove = (e: MouseEvent) => {
+
+  const displaySize =
+    videoSize.width > 0 && canvasWidth > 0 && canvasHeight > 0
+      ? (() => {
+          const videoAspect = videoSize.width / videoSize.height;
+          const canvasAspect = canvasWidth / canvasHeight;
+
+          let width: number;
+          let height: number;
+
+          if (videoAspect > canvasAspect) {
+            width = canvasWidth;
+            height = canvasWidth / videoAspect;
+          } else {
+            height = canvasHeight;
+            width = canvasHeight * videoAspect;
+          }
+
+          return { width, height };
+        })()
+      : { width: canvasWidth, height: canvasHeight };
+
+  const scale = videoSize.width > 0 ? displaySize.width / videoSize.width : 1;
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!isDragging || !dragHandle || !containerRef.current) return;
 
     const deltaX = (e.clientX - dragStart.x) / (videoSize.width * scale);
     const deltaY = (e.clientY - dragStart.y) / (videoSize.height * scale);
 
-    let newCrop = { ...cropStart };
+    const newCrop = { ...cropStart };
 
     if (dragHandle === "center") {
       newCrop.x = Math.max(
@@ -258,30 +282,7 @@ export const CropModeView: React.FC<CropModeViewProps> = ({
     newCrop.y = Math.max(0, Math.min(1 - newCrop.height, newCrop.y));
 
     setCrop(newCrop);
-  };
-
-  const displaySize =
-    videoSize.width > 0 && canvasWidth > 0 && canvasHeight > 0
-      ? (() => {
-          const videoAspect = videoSize.width / videoSize.height;
-          const canvasAspect = canvasWidth / canvasHeight;
-
-          let width: number;
-          let height: number;
-
-          if (videoAspect > canvasAspect) {
-            width = canvasWidth;
-            height = canvasWidth / videoAspect;
-          } else {
-            height = canvasHeight;
-            width = canvasHeight * videoAspect;
-          }
-
-          return { width, height };
-        })()
-      : { width: canvasWidth, height: canvasHeight };
-
-  const scale = videoSize.width > 0 ? displaySize.width / videoSize.width : 1;
+  }, [isDragging, dragHandle, dragStart, cropStart, lockedAspect, videoSize, scale]);
 
   const cropPixels =
     videoSize.width > 0
@@ -293,13 +294,13 @@ export const CropModeView: React.FC<CropModeViewProps> = ({
         }
       : { x: 0, y: 0, width: 0, height: 0 };
 
-  const handleMouseUp = () => {
+  const handleMouseUp = useCallback(() => {
     if (isDragging && dragHandle) {
       onCropChange(crop);
     }
     setIsDragging(false);
     setDragHandle(null);
-  };
+  }, [isDragging, dragHandle, onCropChange, crop]);
 
   useEffect(() => {
     if (isDragging) {
@@ -318,6 +319,8 @@ export const CropModeView: React.FC<CropModeViewProps> = ({
     lockedAspect,
     videoSize,
     scale,
+    handleMouseMove,
+    handleMouseUp,
   ]);
 
   const handleAspectRatio = (ratio: number | null) => {

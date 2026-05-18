@@ -324,7 +324,7 @@ export const MotionPresetsPanel: React.FC<MotionPresetsPanelProps> = ({
 
   const [selectedCategory, setSelectedCategory] =
     useState<PresetCategory>("entrance");
-  const customDurations: Record<string, number> = {};
+  const customDurations = useMemo<Record<string, number>>(() => ({}), []);
 
   const targetClipId = clipId || selectedClipIds[0];
   const presetLibrary = useMemo(() => getPresetLibrary(), []);
@@ -351,15 +351,7 @@ export const MotionPresetsPanel: React.FC<MotionPresetsPanelProps> = ({
     if (stickerClip) return { type: "sticker", data: stickerClip as ClipLike };
 
     return null;
-  }, [
-    targetClipId,
-    project.timeline.tracks,
-    getTextClip,
-    getShapeClip,
-    getSVGClip,
-    getStickerClip,
-    project.modifiedAt,
-  ]);
+  }, [targetClipId, project.timeline.tracks, getTextClip, getShapeClip, getSVGClip, getStickerClip]);
 
   const detectAppliedPresets = useCallback(() => {
     if (!clip) return { entrance: null, exit: null, emphasis: null };
